@@ -1,0 +1,27 @@
+.panzoom__image_initial img {
+  cursor: pointer;
+}
+
+.panzoom__controls,
+.panzoom__image_panzoom {
+  display: none;
+}
+
+.panzoom--viewing {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  background: black;
+  z-index: 1;
+}
+.panzoom--viewing .panzoom__image_initial {
+  display: none;
+}
+
+.panzoom--viewing .panzoom__controls,
+.panzoom--viewing .panzoom__image_panzoom {
+  display: block;
+}

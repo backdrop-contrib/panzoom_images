@@ -1,0 +1,336 @@
+<?php
+/**
+ * @file
+ * Provides a field formatter to render images using the Panzoom jquery library.
+ *
+ * @see https://github.com/timmywil/jquery.panzoom
+ *
+ * @todo Add ctools export?
+ * @todo Add help
+ */
+
+define('PANZOOM_CONFIG_SETS', 'panzoom_images_config_sets');
+
+/**
+ * Implements hook_menu().
+ */
+function panzoom_images_menu() {
+  $items = array();
+
+  $items['panzoom/%'] = array(
+    'title' => 'Ajax load panzoom image',
+    'description' => 'Load an image in a given image_style',
+    'page callback' => 'panzoom_ajax_load_image',
+    'page arguments' => array(1, 2),
+    'access arguments' => array('access content'),
+    'delivery callback' => 'panzoom_ajax_load_image_delivery_callback',
+  );
+
+  $items['admin/config/media/panzoom'] = array(
+    'title' => 'Panzoom',
+    'description' => 'Manage Panzoom configuration sets that are applied to image field formatters.',
+    'page callback' => 'panzoom_images_config_sets_list',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'panzoom_images.admin.inc',
+  );
+  $items['admin/config/media/panzoom/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/config/media/panzoom/add'] = array(
+    'title' => 'Add Panzoom Configuration Set',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('panzoom_images_config_set_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'panzoom_images.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => 1,
+  );
+  $items['admin/config/media/panzoom/%'] = array(
+    'title' => 'Panzoom Configuration Set',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('panzoom_images_config_set_form', 4),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'panzoom_images.admin.inc',
+  );
+  $items['admin/config/media/panzoom/%/delete'] = array(
+    'title' => 'Delete Panzoom Configuratin Set',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('panzoom_images_config_set_delete', 4),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'panzoom_images.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Page callback: Ajax load image.
+ *
+ * @param int $fid
+ *   The image file ID.
+ * @param string $image_style
+ *   The machine name of the image style to render the image in.
+ */
+function panzoom_ajax_load_image($fid, $image_style = '') {
+  $image = file_load($fid);
+  $output = array(
+    '#theme' => 'image_formatter',
+    '#item' => (array) $image,
+    '#image_style' => $image_style,
+    '#path' => '',
+  );
+  return $output;
+}
+
+/**
+ * Delivery callback: Ajax load image.
+ */
+function panzoom_ajax_load_image_delivery_callback($page_callback_result) {
+  $output = drupal_render($page_callback_result);
+  print $output;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function panzoom_images_theme() {
+  return array(
+    'panzoom_controls' => array(
+      'variables' => array(
+        'include_zoom_in' => TRUE,
+        'include_zoom_out' => TRUE,
+        'include_zoom_range' => TRUE,
+        'include_reset' => TRUE,
+      ),
+      'file' => 'panzoom_images.theme.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function panzoom_images_field_formatter_info() {
+  return array(
+    'panzoom_images_formatter' => array(
+      'label' => t('Panzoom'),
+      'field types' => array('image'),
+      'settings' => array(
+        'panzoom_images_config_set' => '',
+        'panzoom_images_image_style_initial' => '',
+        'panzoom_images_image_style_panzoom' => '',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function panzoom_images_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $element = array();
+
+  $element['panzoom_images_config_set'] = array(
+    '#type' => 'select',
+    '#title' => t('Configuration Set'),
+    '#options' => panzoom_images_get_configuration_set_options(),
+    '#default_value' => $settings['panzoom_images_config_set'],
+    '#empty_option' => t('Default'),
+    '#description' => t('Choose from one of the existing Panzoom configuration sets.'),
+  );
+
+  $image_styles = image_style_options(FALSE);
+  $element['panzoom_images_image_style_initial'] = array(
+    '#type' => 'select',
+    '#title' => t('Teaser Image Style'),
+    '#description' => t('Select the image style used when initially rendering the image. This typically would be a teaser image the user clicks on to open the Panzoom image.'),
+    '#default_value' => $settings['panzoom_images_image_style_initial'],
+    '#empty_option' => t('None (original image)'),
+    '#options' => $image_styles,
+  );
+  $element['panzoom_images_image_style_panzoom'] = array(
+    '#type' => 'select',
+    '#title' => t('Panzoom Image Style'),
+    '#description' => t('Select the image style used when applying Panzoom. Leave as original image for better quality zooming.'),
+    '#default_value' => $settings['panzoom_images_image_style_panzoom'],
+    '#empty_option' => t('None (original image)'),
+    '#options' => $image_styles,
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function panzoom_images_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $configuation_set_options = panzoom_images_get_configuration_set_options();
+  $image_styles = image_style_options(FALSE);
+
+  $t_vars = array(
+    '@config_set' => !empty($configuation_set_options[$settings['panzoom_images_config_set']]) ? $configuation_set_options[$settings['panzoom_images_config_set']] : t('Default'),
+    '@image_style_initial' => !empty($image_styles[$settings['panzoom_images_image_style_initial']]) ? $image_styles[$settings['panzoom_images_image_style_initial']] : t('None (original image)'),
+    '@image_style_panzoom' => !empty($image_styles[$settings['panzoom_images_image_style_panzoom']]) ? $image_styles[$settings['panzoom_images_image_style_panzoom']] : t('None (original image)'),
+  );
+  $summary = t('Panzoom Configuration Set: @config_set<br/>Initial Load Image Style: @image_style_initial<br/>Panzoom Image Style: @image_style_panzoom', $t_vars);
+
+  return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ *
+ * @todo should we use a custom theme function?
+ */
+function panzoom_images_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+  $config_set = panzoom_images_get_config_set($settings['panzoom_images_config_set']);
+  $js_settings = array($settings['panzoom_images_config_set'] => $config_set);
+
+  foreach ($items as $delta => $item) {
+    $element[$delta] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('panzoom'),
+        'data-panzoom-config-set' => $settings['panzoom_images_config_set'],
+      ),
+      'image_initial_container' => array(
+        '#type' => 'container',
+        '#attributes' => array(
+          'class' => array('panzoom__image_initial'),
+          'data-fid' => $item['fid'],
+          'data-panzoom-image-style' => $settings['panzoom_images_image_style_panzoom'],
+        ),
+        'image_initial' => array(
+          '#theme' => 'image_formatter',
+          '#item' => $item,
+          '#image_style' => $settings['panzoom_images_image_style_initial'],
+        ),
+      ),
+      'controls' => array(
+        '#theme' => 'panzoom_controls',
+        '#include_zoom_in' => empty($config_set['disableZoom']),
+        '#include_zoom_out' => empty($config_set['disableZoom']),
+        '#include_zoom_range' => empty($config_set['disableZoom']),
+        '#include_reset' => TRUE,
+      ),
+      'image_panzoom_container' => array(
+        '#type' => 'container',
+        '#attributes' => array(
+          'class' => array('panzoom__image_panzoom'),
+        ),
+      ),
+      '#attached' => array(
+        'libraries_load' => array(
+          array('panzoom'),
+        ),
+        'js' => array(
+          array(
+            'data' => drupal_get_path('module', 'panzoom_images') . '/js/panzoom_images.js',
+            'type' => 'file',
+          ),
+          array(
+            'data' => array(
+              'panzoomConfigSets' => $js_settings,
+            ),
+            'type' => 'setting',
+          ),
+        ),
+        'css' => array(
+          drupal_get_path('module', 'panzoom_images') . '/css/panzoom_images.css',
+        ),
+      ),
+    );
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function panzoom_images_libraries_info() {
+  $libraries['panzoom'] = array(
+    'name' => 'Panzoom',
+    'vendor url' => 'https://github.com/timmywil/jquery.panzoom',
+    'download url' => 'https://github.com/timmywil/jquery.panzoom/archive/2.0.6.tar.gz',
+    'version arguments' => array(
+      'file' => 'dist/jquery.panzoom.min.js',
+      'pattern' => '@v+([0-9\.-]+)@',
+      'lines' => 3,
+    ),
+    'files' => array(
+      'js' => array(
+        'dist/jquery.panzoom.min.js' => array(
+          'type' => 'file',
+          'scope' => 'footer',
+        ),
+      ),
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+ * Get a list of available Panzoom configuration sets.
+ *
+ * To avoid having to configure panzoom settings for each field, we create
+ * configuration sets. This function simply returns back a list of sets to use
+ * as '#options' in a select field.
+ */
+function panzoom_images_get_configuration_set_options() {
+  $options = array();
+  $config_sets = variable_get(PANZOOM_CONFIG_SETS, array());
+  foreach ($config_sets as $machine_name => $config_set) {
+    $options[$machine_name] = $config_set['label'];
+  }
+  return $options;
+}
+
+/**
+ * Get Panzoom Configuration Set.
+ *
+ * Look up an existing configuration set based on the machine_name. Returns the
+ * default configuration if no configuration set is found.
+ *
+ * @param string $machine_name
+ *   The machine name for the configuration set.
+ *
+ * @return array
+ *   An array of settings for the given Panzoom configuration set.
+ */
+function panzoom_images_get_config_set($machine_name = '') {
+  $settings = array(
+    'transition' => TRUE,
+    'cursor' => 'move',
+    'disablePan' => FALSE,
+    'disableZoom' => FALSE,
+    'increment' => 0.3,
+    'minScale' => 0.4,
+    'maxScale' => 5,
+    'rangeStep' => 0.05,
+    'duration' => 200,
+    'easing' => 'ease-in-out',
+    'contain' => FALSE,
+    'zoom_in_selector' => '.panzoom__zoom_in',
+    'zoom_out_selector' => '.panzoom__zoom_out',
+    'zoom_range_selector' => '.panzoom__zoom_range',
+    'reset_selector' => '.panzoom__reset',
+  );
+
+  if ($machine_name && $config_sets = variable_get(PANZOOM_CONFIG_SETS, array())) {
+    if (!empty($config_sets[$machine_name])) {
+      $settings = array_merge($settings, $config_sets[$machine_name]);
+    }
+  }
+
+  return $settings;
+}
