@@ -1,0 +1,4 @@
+name = PanZoom Images
+description = Add a formatter to image fields to render using the Panzoom (https://github.com/timmywil/jquery.panzoom) jquery library.
+package = Fields
+core = 7.x
