@@ -15,14 +15,14 @@
 
       // There could possibly be multiple 'teaser' images that are clickable and
       // open up the panzoom image so loop through each panzoom container.
-      $panzoomSel.each(function(index) {
-        var $panzoomContainer = $(this),
-            $initialImageContainer = $panzoomContainer.children('.panzoom__image_initial'),
-            $panzoomControls = $panzoomContainer.children('.panzoom__controls'),
-            $panzoomImageContainer = $panzoomContainer.children('.panzoom__image_panzoom');
+      $panzoomSel.each(function (index) {
+        var $panzoomContainer = $(this);
+        var $initialImageContainer = $panzoomContainer.children('.panzoom__image_initial');
+        var $panzoomControls = $panzoomContainer.children('.panzoom__controls');
+        var $panzoomImageContainer = $panzoomContainer.children('.panzoom__image_panzoom');
 
         // Add a handler to close the panzoom image when clicked.
-        $panzoomControls.children('.panzoom__close').on('click', function(e) {
+        $panzoomControls.children('.panzoom__close').on('click', function (e) {
           console.log('closing');
           e.preventDefault();
           $panzoomContainer.removeClass('panzoom--viewing');
@@ -30,12 +30,12 @@
 
         // On the teaser image add a click handler that will ajax load the
         // panzoom image and apply the panzoom library to the new image.
-        $initialImageContainer.children('img').on('click', function(e) {
+        $initialImageContainer.children('img').on('click', function (e) {
           $panzoomContainer.addClass('panzoom--viewing');
-          $panzoomImageContainer.once('loadPanzoomImage', function() {
-            var fid = $initialImageContainer.data('fid'),
-                style = $initialImageContainer.data('panzoom-image-style'),
-                ajaxUrl = '/panzoom/' + fid;
+          $panzoomImageContainer.once('loadPanzoomImage', function () {
+            var fid = $initialImageContainer.data('fid');
+            var style = $initialImageContainer.data('panzoom-image-style');
+            var ajaxUrl = '/panzoom/' + fid;
 
             // The ajax callback requires the file ID (fid) but it does not
             // require the image style. Conditionally append the style to the
@@ -44,9 +44,9 @@
               ajaxUrl = ajaxUrl + '/' + style;
             }
 
-            $panzoomImageContainer.load(ajaxUrl, function() {
-              var configSetId = $panzoomContainer.data('panzoom-config-set'),
-                  $configSet = Drupal.settings.panzoomConfigSets[configSetId];
+            $panzoomImageContainer.load(ajaxUrl, function () {
+              var configSetId = $panzoomContainer.data('panzoom-config-set');
+              var $configSet = Drupal.settings.panzoomConfigSets[configSetId];
 
               $.extend($configSet, {
                 $zoomIn: $panzoomControls.children($configSet.zoom_in_selector),
