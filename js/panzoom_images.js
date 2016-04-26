@@ -56,6 +56,33 @@
               });
 
               $panzoomImageContainer.children('img').panzoom($configSet);
+
+              if ($configSet.mouse_scroll == 'zoom') {
+                $panzoomImageContainer.children('img').parent().on('mousewheel.focal', function( e ) {
+                  e.preventDefault();
+                  var delta = e.delta || e.originalEvent.wheelDelta;
+                  var zoomOut = delta ? delta < 0 : e.originalEvent.deltaY > 0;
+                  // @todo make zoom options configuration.
+                  $panzoomImageContainer.children('img').panzoom('zoom', zoomOut, {
+                    increment: 0.1,
+                    animate: false,
+                    focal: e
+                  });
+                });
+              }
+              else if ($configSet.mouse_scroll == 'pan_vertical') {
+                $panzoomImageContainer.children('img').parent().on('mousewheel.focal', function( e ) {
+                  e.preventDefault();
+                  var delta = e.delta || e.originalEvent.wheelDelta;
+                  var panDown = delta ? delta < 0 : e.originalEvent.deltaY > 0;
+                  var changeY = panDown ? -20 : 20;
+                  // @todo make pan options configuration.
+                  $panzoomImageContainer.children('img').panzoom('pan', 0, changeY, {
+                    relative: true
+                  });
+                });
+              }
+
             });
           });
 

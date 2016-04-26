@@ -248,6 +248,12 @@ function panzoom_images_field_formatter_view($entity_type, $entity, $field, $ins
         ),
       ),
     );
+
+    if ($mousewheel_library = libraries_load('jquery.mousewheel')) {
+      if ($mousewheel_library['installed']) {
+        $element[$delta]['#attached']['libraries_load'][] = array('jquery.mousewheel');
+      }
+    }
   }
 
   return $element;
@@ -269,6 +275,24 @@ function panzoom_images_libraries_info() {
     'files' => array(
       'js' => array(
         'dist/jquery.panzoom.min.js' => array(
+          'type' => 'file',
+          'scope' => 'footer',
+        ),
+      ),
+    ),
+  );
+  $libraries['jquery.mousewheel'] = array(
+    'name' => 'jQuery Mousewheel',
+    'vendor url' => 'https://plugins.jquery.com/mousewheel/',
+    'download url' => 'https://github.com/jquery/jquery-mousewheel/archive/3.1.13.zip',
+    'version arguments' => array(
+      'file' => 'jquery.mousewheel.min.js',
+      'pattern' => '@([0-9\.-]+)@',
+      'lines' => 3,
+    ),
+    'files' => array(
+      'js' => array(
+        'jquery.mousewheel.min.js' => array(
           'type' => 'file',
           'scope' => 'footer',
         ),
@@ -324,6 +348,7 @@ function panzoom_images_get_config_set($machine_name = '') {
     'zoom_out_selector' => '.panzoom__zoom_out',
     'zoom_range_selector' => '.panzoom__zoom_range',
     'reset_selector' => '.panzoom__reset',
+    'mouse_scroll' => 'none',
   );
 
   if ($machine_name && $config_sets = variable_get(PANZOOM_CONFIG_SETS, array())) {

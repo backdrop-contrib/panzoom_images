@@ -137,6 +137,22 @@ function panzoom_images_config_set_form($form, &$form_state, $config_set = '') {
     '#default_value' => $defaults['contain'],
   );
 
+  // Custom configuration not provided directly by Panzoom.
+  $mousewheel_library = libraries_load('jquery.mousewheel');
+  $form['custom'] = array('#type' => 'container');
+  $form['custom']['mouse_scroll'] = array(
+    '#type' => 'select',
+    '#title' => t('Mouse Scroll Effect'),
+    '#options' => array(
+      'none' => t('None'),
+      'pan_vertical' => t('Pan Vertically'),
+      'zoom' => t('Zoom'),
+    ),
+    '#default_value' => $mousewheel_library['installed'] ? $defaults['mouse_scroll'] : 'none',
+    '#disabled' => !$mousewheel_library['installed'],
+    '#description' => t('Provide mouse scroll effects if the jQuery Mousewheel library is installed.'),
+  );
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
