@@ -3,11 +3,11 @@
  * A javascript file for the Panzoom Images module.
  */
 
-(function ($, Drupal) {
+(function ($, Backdrop) {
 
   'use strict';
 
-  Drupal.behaviors.panzoomImages = {
+  Backdrop.behaviors.panzoomImages = {
 
     attach: function (context, settings) {
 
@@ -23,7 +23,6 @@
 
         // Add a handler to close the panzoom image when clicked.
         $panzoomControls.children('.panzoom__close').on('click', function (e) {
-          console.log('closing');
           e.preventDefault();
           $panzoomContainer.removeClass('panzoom--viewing');
         });
@@ -46,7 +45,7 @@
 
             $panzoomImageContainer.load(ajaxUrl, function () {
               var configSetId = $panzoomContainer.data('panzoom-config-set');
-              var $configSet = Drupal.settings.panzoomConfigSets[configSetId];
+              var $configSet = Backdrop.settings.panzoomConfigSets[configSetId];
 
               $.extend($configSet, {
                 $zoomIn: $panzoomControls.children($configSet.zoom_in_selector),
@@ -92,4 +91,4 @@
 
   };
 
-})(jQuery, Drupal);
+})(jQuery, Backdrop);

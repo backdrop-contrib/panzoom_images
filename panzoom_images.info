@@ -1,6 +1,7 @@
+type = module
 name = Panzoom Images
-description = Add a formatter to image fields to render using the Panzoom (https://github.com/timmywil/jquery.panzoom) jquery library.
+description = An image field formatter that usesg the Panzoom jQuery library.
 package = Fields
-core = 7.x
-dependencies[] = 'libraries'
+backdrop = 1.x
+
 configure = admin/config/media/panzoom

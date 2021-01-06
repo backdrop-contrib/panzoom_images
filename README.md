@@ -1,5 +1,5 @@
-Introduction
-============
+Panzoom Images
+===============
 
 Panzoom Images provides a new image field formatter to render the image using
 the Panzoom jQuery library (http://timmywil.github.io/jquery.panzoom/).
@@ -11,41 +11,69 @@ ajax loaded to the page using the Panzoom image style. The user may then pan
 and zoom the image to explore in detail.
 
 Main Features
--------------
 
 * Provides a Panzoom image field formatter.
 * Create and choose from multiple Panzoom configuration sets.
 
-Installation
-============
 
 Requirements
 ------------
 
-* Libraries module (https://www.drupal.org/project/libraries)
-* Panzoom jQuery Library (http://timmywil.github.io/jquery.panzoom/)
+ * None (The PanZoom jQuery library is included in this module)
 
-# Install the libraries module.
-# Add the Panzoom jQuery library to the sites/all/libraries folder.
-  Note: A .make file is included to download the jQuery library to the
-  right folder.
-# Install the Panzoom Images module.
+Installation
+------------
 
-Configuration
--------------
+- Install this module using the official Backdrop CMS instructions at
+  https://backdropcms.org/guide/modules.
 
-# Go to the 'Manage Display' for the entity (e.g. node).
-# Choose 'Panzoom' as the Format for an image field.
-# Select the image styles to use for rendering the image.
-# (Optionally) Add new Panzoom configuration sets that can be selected on the
+- Add an Image field to any entity (Node, User, or Term).
+
+- Go to the 'Manage Display' page for that entity.
+
+- Choose 'Panzoom' as the Format for the image field.
+
+- Select the image styles to use for rendering the image.
+
+- (Optionally) Add new Panzoom configuration sets that can be selected on the
   field formatter settings.
 
-Maintainers
-===========
 
-* Craig Aschbrenner <https://www.drupal.org/user/246322>
+Documentation
+-------------
 
-Sponsors
-========
+Additional documentation is located in the Wiki:
+https://github.com/backdrop-contrib/panzoom_images/wiki/Documentation.
 
-@todo
+Issues
+------
+
+Bugs and Feature requests should be reported in the Issue Queue:
+https://github.com/backdrop-contrib/panzoom_images/issues.
+
+Current Maintainers
+-------------------
+
+- [Jen Lampton](https://github.com/jenlampton).
+- Seeking additional maintainers.
+
+Credits
+-------
+
+- Ported to Backdrop CMS by [Jen Lampton](https://github.com/jenlampton).
+- Originally written for Drupal by [Craig Aschbrenner](https://www.drupal.org/user/246322)
+- Based on the [Panzoom jQuery library](http://timmywil.github.io/jquery.panzoom).
+- Drupal module sponsored by [University Business Magazine](http://www.universitybusiness.com/
+- Drupal module sponsored by [Redfin Solutions, LLC](https://www.drupal.org/redfin-solutions-llc).
+
+Licenses
+--------
+
+* This project is GPL v2 software.
+  See the LICENSE.txt file in this directory for complete text.
+
+* The jQuery PanZoom library is MIT-licenced.
+  See the MTC-License.txt file in the panzoom directory for complete text.
+
+
+

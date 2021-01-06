@@ -20,7 +20,8 @@ function panzoom_images_config_sets_list() {
   );
   $rows = array();
 
-  foreach ($config_set_options as $machine_name => $label) {
+  foreach ($config_set_options as $file_name => $label) {
+    $machine_name = str_replace('panzoom_images.set.', '', $file_name);
     $rows[$machine_name] = array(
       $label,
       l(t('Edit'), "admin/config/media/panzoom/{$machine_name}"),
@@ -138,7 +139,6 @@ function panzoom_images_config_set_form($form, &$form_state, $config_set = '') {
   );
 
   // Custom configuration not provided directly by Panzoom.
-  $mousewheel_library = libraries_load('jquery.mousewheel');
   $form['custom'] = array('#type' => 'container');
   $form['custom']['mouse_scroll'] = array(
     '#type' => 'select',
@@ -148,8 +148,7 @@ function panzoom_images_config_set_form($form, &$form_state, $config_set = '') {
       'pan_vertical' => t('Pan Vertically'),
       'zoom' => t('Zoom'),
     ),
-    '#default_value' => $mousewheel_library['installed'] ? $defaults['mouse_scroll'] : 'none',
-    '#disabled' => !$mousewheel_library['installed'],
+    '#default_value' => $defaults['mouse_scroll'],
     '#description' => t('Provide mouse scroll effects if the jQuery Mousewheel library is installed.'),
   );
 
@@ -170,9 +169,7 @@ function panzoom_images_config_set_form($form, &$form_state, $config_set = '') {
  */
 function panzoom_images_config_set_form_submit($form, &$form_state) {
   $defaults = panzoom_images_get_config_set();
-
-  $settings['label'] = $form_state['values']['label'];
-  $settings['name'] = $form_state['values']['name'];
+  $settings = $defaults;
 
   foreach (array_keys($defaults) as $key) {
     if (isset($form_state['values'][$key])) {
@@ -180,9 +177,12 @@ function panzoom_images_config_set_form_submit($form, &$form_state) {
     }
   }
 
-  $config_sets = variable_get(PANZOOM_CONFIG_SETS, array());
-  $config_sets[$settings['name']] = $settings;
-  variable_set(PANZOOM_CONFIG_SETS, $config_sets);
+  $settings['label'] = $form_state['values']['label'];
+  $settings['name'] = $form_state['values']['name'];
+
+  $config = config('panzoom_images.set.' . $settings['name']);
+  $config->setData($settings);
+  $config->save();
 
   $form_state['redirect'] = 'admin/config/media/panzoom';
 }
@@ -191,8 +191,8 @@ function panzoom_images_config_set_form_submit($form, &$form_state) {
  * Machine Name element validate handler.
  */
 function panzoom_images_machine_name_exists($value) {
-  $config_sets = variable_get(PANZOOM_CONFIG_SETS, array());
-  return !empty($config_sets[$value]);
+  $config_set = config_get('panzoom_images.set.' . $value);
+  return !empty($config_set);
 }
 
 /**
@@ -222,12 +222,9 @@ function panzoom_images_config_set_delete($form, &$form_state, $machine_name) {
  */
 function panzoom_images_config_set_delete_submit($form, &$form_state) {
   $machine_name = $form_state['values']['name'];
-  $config_sets = variable_get(PANZOOM_CONFIG_SETS, array());
 
-  if (!empty($config_sets[$machine_name])) {
-    unset($config_sets[$machine_name]);
-    variable_set(PANZOOM_CONFIG_SETS, $config_sets);
-  }
+  $config = config('panzoom_images.set.' . $machine_name);
+  $config->delete();
 
   $form_state['redirect'] = 'admin/config/media/panzoom';
 }

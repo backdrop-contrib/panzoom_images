@@ -4,12 +4,32 @@
  * Provides a field formatter to render images using the Panzoom jquery library.
  *
  * @see https://github.com/timmywil/jquery.panzoom
- *
- * @todo Add ctools export?
- * @todo Add help
  */
 
 define('PANZOOM_CONFIG_SETS', 'panzoom_images_config_sets');
+
+/**
+ * Implements hook_config_info().
+ */
+function panzoom_images_config_info() {
+  // If there are a large number of configuration files prefixed with this
+  // string, provide a "name_key" that will be read from the configuration file
+  // and used when listing the configuration file.
+  $prefixes['panzoom_images.set'] = array(
+    'name_key' => 'name',
+    'label_key' => 'label',
+    'group' => t('Panzoom Config Sets'),
+  );
+
+  // If this configuration file points to one particular file, a "name" key
+  // will display that exact string for that file.
+  $prefixes['panzoom_images.settings'] = array(
+    'label' => t('Panzoom Settings'),
+    'group' => t('Configuration'),
+  );
+
+  return $prefixes;
+}
 
 /**
  * Implements hook_menu().
@@ -39,7 +59,7 @@ function panzoom_images_menu() {
   );
   $items['admin/config/media/panzoom/add'] = array(
     'title' => 'Add Panzoom Configuration Set',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('panzoom_images_config_set_form'),
     'access arguments' => array('administer site configuration'),
     'file' => 'panzoom_images.admin.inc',
@@ -48,14 +68,14 @@ function panzoom_images_menu() {
   );
   $items['admin/config/media/panzoom/%'] = array(
     'title' => 'Panzoom Configuration Set',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('panzoom_images_config_set_form', 4),
     'access arguments' => array('administer site configuration'),
     'file' => 'panzoom_images.admin.inc',
   );
   $items['admin/config/media/panzoom/%/delete'] = array(
     'title' => 'Delete Panzoom Configuratin Set',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('panzoom_images_config_set_delete', 4),
     'access arguments' => array('administer site configuration'),
     'file' => 'panzoom_images.admin.inc',
@@ -87,7 +107,7 @@ function panzoom_ajax_load_image($fid, $image_style = '') {
  * Delivery callback: Ajax load image.
  */
 function panzoom_ajax_load_image_delivery_callback($page_callback_result) {
-  $output = drupal_render($page_callback_result);
+  $output = backdrop_render($page_callback_result);
   print $output;
 }
 
@@ -138,7 +158,6 @@ function panzoom_images_field_formatter_settings_form($field, $instance, $view_m
     '#title' => t('Configuration Set'),
     '#options' => panzoom_images_get_configuration_set_options(),
     '#default_value' => $settings['panzoom_images_config_set'],
-    '#empty_option' => t('Default'),
     '#description' => t('Choose from one of the existing Panzoom configuration sets.'),
   );
 
@@ -191,7 +210,7 @@ function panzoom_images_field_formatter_settings_summary($field, $instance, $vie
 function panzoom_images_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
   $settings = $display['settings'];
-  $config_set = panzoom_images_get_config_set($settings['panzoom_images_config_set']);
+  $config_set = config_get('panzoom_images.set.' . $settings['panzoom_images_config_set']);
   $js_settings = array($settings['panzoom_images_config_set'] => $config_set);
 
   foreach ($items as $delta => $item) {
@@ -220,6 +239,7 @@ function panzoom_images_field_formatter_view($entity_type, $entity, $field, $ins
         '#include_zoom_out' => empty($config_set['disableZoom']),
         '#include_zoom_range' => empty($config_set['disableZoom']),
         '#include_reset' => TRUE,
+        '#weight' => -1,
       ),
       'image_panzoom_container' => array(
         '#type' => 'container',
@@ -228,12 +248,12 @@ function panzoom_images_field_formatter_view($entity_type, $entity, $field, $ins
         ),
       ),
       '#attached' => array(
-        'libraries_load' => array(
-          array('panzoom'),
+        'library' => array(
+          array('panzoom_images', 'panzoom'),
         ),
         'js' => array(
           array(
-            'data' => drupal_get_path('module', 'panzoom_images') . '/js/panzoom_images.js',
+            'data' => backdrop_get_path('module', 'panzoom_images') . '/js/panzoom_images.js',
             'type' => 'file',
           ),
           array(
@@ -244,58 +264,43 @@ function panzoom_images_field_formatter_view($entity_type, $entity, $field, $ins
           ),
         ),
         'css' => array(
-          drupal_get_path('module', 'panzoom_images') . '/css/panzoom_images.css',
+          backdrop_get_path('module', 'panzoom_images') . '/css/panzoom_images.css',
         ),
       ),
     );
 
-    if ($mousewheel_library = libraries_load('jquery.mousewheel')) {
-      if ($mousewheel_library['installed']) {
-        $element[$delta]['#attached']['libraries_load'][] = array('jquery.mousewheel');
-      }
-    }
+    $element[$delta]['#attached']['library'][] = array('panzoom_images', 'jquery.mousewheel');
   }
 
   return $element;
 }
 
 /**
- * Implements hook_libraries_info().
+ * Implements hook_library_info().
  */
-function panzoom_images_libraries_info() {
+function panzoom_images_library_info() {
+  $lib_path = backdrop_get_path('module', 'panzoom_images') . '/libraries/';
   $libraries['panzoom'] = array(
-    'name' => 'Panzoom',
-    'vendor url' => 'https://github.com/timmywil/jquery.panzoom',
-    'download url' => 'https://github.com/timmywil/jquery.panzoom/archive/2.0.6.tar.gz',
-    'version arguments' => array(
-      'file' => 'dist/jquery.panzoom.min.js',
-      'pattern' => '@v+([0-9\.-]+)@',
-      'lines' => 3,
-    ),
-    'files' => array(
-      'js' => array(
-        'dist/jquery.panzoom.min.js' => array(
-          'type' => 'file',
-          'scope' => 'footer',
-        ),
+    'title' => 'Panzoom',
+    'website' => 'https://github.com/timmywil/jquery.panzoom',
+    'version' => '2.0.6',
+    'js' => array(
+      $lib_path . 'panzoom/' . 'dist/jquery.panzoom.min.js' => array(
+        'type' => 'file',
+        'scope' => 'footer',
       ),
     ),
   );
+
   $libraries['jquery.mousewheel'] = array(
-    'name' => 'jQuery Mousewheel',
-    'vendor url' => 'https://plugins.jquery.com/mousewheel/',
+    'title' => 'jQuery Mousewheel',
+    'website' => 'https://plugins.jquery.com/mousewheel/',
     'download url' => 'https://github.com/jquery/jquery-mousewheel/archive/3.1.13.zip',
-    'version arguments' => array(
-      'file' => 'jquery.mousewheel.min.js',
-      'pattern' => '@([0-9\.-]+)@',
-      'lines' => 3,
-    ),
-    'files' => array(
-      'js' => array(
-        'jquery.mousewheel.min.js' => array(
-          'type' => 'file',
-          'scope' => 'footer',
-        ),
+    'version' => '3.1.13',
+    'js' => array(
+      $lib_path . 'jquery-mousewheel/' . 'jquery.mousewheel.min.js' => array(
+        'type' => 'file',
+        'scope' => 'footer',
       ),
     ),
   );
@@ -312,8 +317,10 @@ function panzoom_images_libraries_info() {
  */
 function panzoom_images_get_configuration_set_options() {
   $options = array();
-  $config_sets = variable_get(PANZOOM_CONFIG_SETS, array());
-  foreach ($config_sets as $machine_name => $config_set) {
+  $config_sets = config_get_names_with_prefix('panzoom_images.set');
+  foreach ($config_sets as $file_name) {
+    $config_set = config_get($file_name);
+    $machine_name = str_replace('panzoom_images.set.', '', $file_name);
     $options[$machine_name] = $config_set['label'];
   }
   return $options;
@@ -351,10 +358,9 @@ function panzoom_images_get_config_set($machine_name = '') {
     'mouse_scroll' => 'none',
   );
 
-  if ($machine_name && $config_sets = variable_get(PANZOOM_CONFIG_SETS, array())) {
-    if (!empty($config_sets[$machine_name])) {
-      $settings = array_merge($settings, $config_sets[$machine_name]);
-    }
+  if ($machine_name) {
+    $config_set = config_get('panzoom_images.set.' . $machine_name);
+    $settings = array_merge($settings, $config_set);
   }
 
   return $settings;

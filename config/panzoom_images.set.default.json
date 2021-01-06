@@ -1,0 +1,22 @@
+{
+    "_config_name": "panzoom_images.set.default",
+    "_module": "panzoom_images",
+    "transition": 1,
+    "cursor": "move",
+    "disablePan": 0,
+    "disableZoom": 0,
+    "increment": "0.3",
+    "minScale": "0.4",
+    "maxScale": "5",
+    "rangeStep": "0.05",
+    "duration": "200",
+    "easing": "ease-in-out",
+    "contain": 0,
+    "zoom_in_selector": ".panzoom__zoom_in",
+    "zoom_out_selector": ".panzoom__zoom_out",
+    "zoom_range_selector": ".panzoom__zoom_range",
+    "reset_selector": ".panzoom__reset",
+    "mouse_scroll": "none",
+    "label": "Default",
+    "name": "default"
+}

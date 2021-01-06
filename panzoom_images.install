@@ -12,41 +12,21 @@ function panzoom_images_requirements($phase) {
   $t = get_t();
 
   if ($phase == 'runtime') {
-    $library = libraries_detect('panzoom');
+    // Add the panzoom library info to the status report.
+    $library = backdrop_get_library('panzoom_images', 'panzoom');
     $requirements['panzoom'] = array(
       'title' => $t('Panzoom jQuery Library'),
+      'value' => $library['version'],
+      'severity' => REQUIREMENT_OK,
     );
-    if ($library['installed']) {
-      $requirements['panzoom']['value'] = $library['version'];
-      $requirements['panzoom']['severity'] = REQUIREMENT_OK;
-    }
-    else {
-      $requirements['panzoom']['value'] = $library['error'];
-      $requirements['panzoom']['description'] = $t('Panzoom jQuery Library is missing.');
-      $requirements['panzoom']['severity'] = REQUIREMENT_ERROR;
-    }
-
-    $library = libraries_detect('jquery.mousewheel');
+    // Add the mousewheel library info to the status report.
+    $library = backdrop_get_library('panzoom_images', 'jquery.mousewheel');
     $requirements['jquery.mousewheel'] = array(
       'title' => $t('jQuery Mousewheel'),
+      'value' => $library['version'],
+      'severity' => REQUIREMENT_OK,
     );
-    if ($library['installed']) {
-      $requirements['jquery.mousewheel']['value'] = $library['version'];
-      $requirements['jquery.mousewheel']['severity'] = REQUIREMENT_OK;
-    }
-    else {
-      $requirements['jquery.mousewheel']['value'] = $library['error'];
-      $requirements['jquery.mousewheel']['description'] = $t('jQuery Mousewheel Library is missing. Unable to provide Panzoom mouse scroll capabilities.');
-      $requirements['jquery.mousewheel']['severity'] = REQUIREMENT_WARNING;
-    }
   }
 
   return $requirements;
-}
-
-/**
- * Implements hook_uninstall().
- */
-function panzoom_images_uninstall() {
-  variable_del(PANZOOM_CONFIG_SETS);
 }
