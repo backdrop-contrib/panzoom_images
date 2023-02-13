@@ -280,12 +280,13 @@ function panzoom_images_field_formatter_view($entity_type, $entity, $field, $ins
  */
 function panzoom_images_library_info() {
   $lib_path = backdrop_get_path('module', 'panzoom_images') . '/libraries/';
+
   $libraries['panzoom'] = array(
     'title' => 'Panzoom',
-    'website' => 'https://github.com/timmywil/jquery.panzoom',
-    'version' => '2.0.6',
+    'website' => 'https://github.com/timmywil/panzoom',
+    'version' => '4.5.1',
     'js' => array(
-      $lib_path . 'panzoom/' . 'dist/jquery.panzoom.min.js' => array(
+      $lib_path . 'panzoom/' . 'dist/panzoom.min.js' => array(
         'type' => 'file',
         'scope' => 'footer',
       ),
